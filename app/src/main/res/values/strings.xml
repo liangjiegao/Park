@@ -1,0 +1,15 @@
+<resources>
+    <string name="app_name">Park</string>
+    <string name="welcome_text">Welcome</string>
+    <string name="welcome_text_china">欢迎使用易泊</string>
+    <string name="login_button_text">登录</string>
+    <string name="register">手机号码注册</string>
+    <string name="forget_password">忘记密码</string>
+    <string name="order_username">第三方账号登录</string>
+    <string name="register_button_text">注册</string>
+
+    <string name="seek_park">找车位</string>
+    <string name="function">附近</string>
+    <string name="more">更多</string>
+    <string name="my">我的</string>
+</resources>

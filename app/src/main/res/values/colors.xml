@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="colorPrimary">#3F51B5</color>
+    <color name="colorPrimaryDark">#303F9F</color>
+    <color name="colorAccent">#FF4081</color>
+    <color name="white_text">#ffffff</color>
+    <color name="forget_password">#025BFF</color>
+    <color name="login_button">#32BDBF</color>
+    <color name="login_input_background">#55C7C7C7</color>
+    <color name="loginbox_background">#202828</color>
+    <color name="home_navigation_bar1">#49dab4</color>
+    <color name="home_navigation_bar2">#4cd7ce</color>
+    <color name="home_navigation_bar3">#4cccd6</color>
+    <color name="home_navigation_bar4">#43add1</color>
+    <color name="transparent">#0000</color>
+    <color name="home_frag1_main_backgound">#f1f1f1</color>
+    <color name="white">#ffffff</color>
+    <color name="division_line">#dcdcdc</color>
+    <color name="park_list_item_parkName">#9c9c9c</color>
+    <color name="home_frag1_historypark_park_list">#c7c7c7</color>
+    <color name="place_list_rb">#5c5c5c</color>
+    <color name="indoor_has_car">#ea6868</color>
+    <color name="indoor_no_car">#e2d32f</color>
+</resources>

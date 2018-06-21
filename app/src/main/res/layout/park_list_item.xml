@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.v7.widget.CardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginLeft="4dp"
+    android:layout_marginRight="4dp"
+    android:orientation="vertical"
+    android:layout_marginTop="18dp"
+    app:cardBackgroundColor="#FFFFFF"
+    app:cardCornerRadius="4dp"
+    app:cardElevation="4dp">
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:layout_marginTop="5dp"
+        >
+        <ImageView
+            android:id="@+id/img_"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:src="@drawable/location"
+            android:layout_marginStart="20dp"
+            />
+        <LinearLayout
+            android:id="@+id/ll"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="20dp"
+            android:layout_toEndOf="@+id/img_"
+            android:orientation="vertical"
+            >
+            <TextView
+                android:id="@+id/park_name"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="15dp"
+                android:singleLine="true"
+                android:ems="12"
+                android:textColor="@color/park_list_item_parkName"
+                />
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="3dp"
+                >
+
+                <TextView
+                    android:id="@+id/distance"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="12dp"
+                    />
+                <TextView
+                    android:id="@+id/totalPark"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="10dp"
+                    android:layout_toEndOf="@+id/ll"
+                    android:layout_marginStart="15dp"
+                    />
+                <TextView
+                    android:id="@+id/canPark"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="10dp"
+                    android:layout_toEndOf="@+id/ll"
+                    android:layout_marginStart="30dp"
+                    />
+            </LinearLayout>
+
+        </LinearLayout>
+
+        <ImageButton
+            android:id="@+id/delete_park"
+            android:layout_width="22dp"
+            android:layout_height="22dp"
+            android:scaleType="fitXY"
+            android:src="@drawable/delete"
+            android:background="@color/transparent"
+            android:layout_alignParentEnd="true"
+            android:layout_marginEnd="15dp"
+            />
+    </RelativeLayout>
+
+</android.support.v7.widget.CardView>
