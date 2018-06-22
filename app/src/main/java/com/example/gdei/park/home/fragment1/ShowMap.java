@@ -18,6 +18,7 @@ import com.amap.api.maps.model.MarkerOptions;
 import com.amap.api.maps.model.PolylineOptions;
 import com.example.gdei.park.R;
 import com.example.gdei.park.data.Injection;
+import com.example.gdei.park.home.fragment1.Navi.GPSNaviActivity;
 
 import java.util.List;
 
@@ -115,16 +116,28 @@ public class ShowMap extends Activity implements HomeFragment1Contract.SeekParkP
         }
 
     }
+
     @Override
-    public void seekPath(List<PolylineOptions> polylineOptions){
+    public void seekPath(List<PolylineOptions> polylineOptions, String ssw, String ssj, String sew, String sej){
+        /*
+        Intent intent = new Intent(this, GPSNaviActivity.class);
+        intent.putExtra("sj",ssj);
+        intent.putExtra("sw",ssw);
+        intent.putExtra("ej",sej);
+        intent.putExtra("ew",sew);
+        Log.i(TAG, "seekPath: String ssw, String ssj, String sew, String sej " +ssw +ssj +sew +sej);
+        startActivity(intent);
+        finish();
+        */
+         if (aMap != null){
+         for (PolylineOptions p : polylineOptions) {
+         aMap.addPolyline(p);
+         }
+         }
 
-        if (aMap != null){
-            for (PolylineOptions p : polylineOptions) {
-                aMap.addPolyline(p);
-            }
 
-        }
     }
+
     private void initAMap(){
         if (aMap == null){
            // Log.i(TAG, "initAMap: ");

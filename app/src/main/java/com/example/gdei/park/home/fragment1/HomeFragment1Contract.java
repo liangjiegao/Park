@@ -104,7 +104,7 @@ public class HomeFragment1Contract {
         /**
          * 查询导航路径
          */
-        void seekPath(List<PolylineOptions> polylineOptions);
+        void seekPath(List<PolylineOptions> polylineOptions, String ssw, String ssj, String sew, String sej);
 
 
     }

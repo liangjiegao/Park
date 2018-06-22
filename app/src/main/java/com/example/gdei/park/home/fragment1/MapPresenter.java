@@ -46,11 +46,15 @@ public class MapPresenter implements HomeFragment1Contract.SeekParkPresenter.IMa
             public void callbackPolylineOption(List<PolylineOptions> polylineOptionses) {
     
                 LatLng startLatLng = polylineOptionses.get(0).getPoints().get(0);
+                String ssw = startLatLng.latitude+"";
+                String ssj = startLatLng.longitude+"";
                 int lastPointNum = polylineOptionses.get(polylineOptionses.size() -1).getPoints().size() -1;
                 LatLng endLatLng = polylineOptionses.get(polylineOptionses.size() -1).getPoints().get(lastPointNum);
+                String sew = endLatLng.latitude+"";
+                String sej = endLatLng.longitude+"";
                 Log.i(TAG, "seekPath: startPoint" + startLatLng + "endPoint = " + endLatLng);
                 showMap.updatePosition(null, startLatLng, endLatLng);
-                showMap.seekPath(polylineOptionses);
+                showMap.seekPath(polylineOptionses,ssw,ssj,sew,sej);
             }
         });
     }

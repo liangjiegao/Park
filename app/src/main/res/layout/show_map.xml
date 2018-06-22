@@ -6,6 +6,5 @@
         android:id="@+id/show_mapView"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
-
     </com.amap.api.maps.MapView>
 </RelativeLayout>
