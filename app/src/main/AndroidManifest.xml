@@ -20,7 +20,7 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name=".home.HomeActivity">
+        <activity android:name=".home.fragment1.Navi.TestActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -37,6 +37,15 @@
 
         </activity>
         <activity android:name=".home.fragment1.ShowMap">
+
+        </activity>
+        <activity android:name=".home.HomeActivity">
+
+        </activity>
+        <activity android:name=".home.fragment1.Navi.BaseActivity">
+
+        </activity>
+        <activity android:name=".home.fragment1.Navi.GPSNaviActivity">
 
         </activity>
         <!--启用高德地图服务-->
