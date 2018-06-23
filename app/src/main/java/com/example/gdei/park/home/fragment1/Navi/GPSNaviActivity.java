@@ -3,12 +3,20 @@ package com.example.gdei.park.home.fragment1.Navi;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.location.Location;
+import android.location.LocationManager;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
+import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.KeyEvent;
 
+import com.amap.api.location.AMapLocation;
+import com.amap.api.location.AMapLocationClient;
+import com.amap.api.location.AMapLocationClientOption;
+import com.amap.api.location.AMapLocationListener;
 import com.amap.api.navi.enums.NaviType;
+import com.amap.api.navi.model.AMapNaviLocation;
 import com.amap.api.navi.model.NaviLatLng;
 import com.example.gdei.park.R;
 
@@ -16,8 +24,9 @@ import com.example.gdei.park.R;
  * Created by gdei on 2018/6/22.
  */
 
-public class GPSNaviActivity extends BaseActivity {
-
+public class GPSNaviActivity extends BaseActivity implements AMapLocationListener{
+    private static final String TAG = "GPSNaviActivity";
+    
     //继承BaseActivity
     private double sj;
     private double sw;
@@ -27,6 +36,15 @@ public class GPSNaviActivity extends BaseActivity {
     private String ssw;
     private String sej;
     private String sew;
+
+    //起始位置是否是当前定位
+    private boolean isMyLoc;
+    private int strategy;   //导航策略
+
+    //声明mlocationClient对象
+    public AMapLocationClient mlocationClient;
+    //声明mLocationOption对象
+    public AMapLocationClientOption mLocationOption = null;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -44,14 +62,40 @@ public class GPSNaviActivity extends BaseActivity {
         sew = intent.getStringExtra("ew");
         ew = Double.parseDouble(sew);
 
+        isMyLoc = intent.getBooleanExtra("isMyLoc",false);
+
         Log.e("导航", "获取数据完毕");
         setContentView(R.layout.activity_basic_navi);
         mAMapNaviView = findViewById(R.id.navi_view);
         mAMapNaviView.onCreate(savedInstanceState);
         mAMapNaviView.setAMapNaviViewListener(this);
 
+
     }
 
+    //从网络获取经纬度
+    public Location getLngAndLatWithNetwork() {
+
+        mlocationClient = new AMapLocationClient(this);
+        //初始化定位参数
+        mLocationOption = new AMapLocationClientOption();
+        //设置定位监听
+        mlocationClient.setLocationListener(this);
+        //设置定位模式为高精度模式，Battery_Saving为低功耗模式，Device_Sensors是仅设备模式
+        mLocationOption.setLocationMode(AMapLocationClientOption.AMapLocationMode.Hight_Accuracy);
+        //设置定位间隔,单位毫秒,默认为2000ms
+        mLocationOption.setInterval(2000);
+        //设置定位参数
+        mlocationClient.setLocationOption(mLocationOption);
+        // 此方法为每隔固定时间会发起一次定位请求，为了减少电量消耗或网络流量消耗，
+        // 注意设置合适的定位时间的间隔（最小间隔支持为1000ms），并且在合适时间调用stopLocation()方法来取消定位请求
+        // 在定位结束后，在合适的生命周期调用onDestroy()方法
+        // 在单次定位情况下，定位无论成功与否，都无需调用stopLocation()方法移除请求，定位sdk内部会移除
+        //启动定位
+        mlocationClient.startLocation();
+        return null;
+
+    }
     @Override
     public void onInitNaviSuccess() {
         super.onInitNaviSuccess();
@@ -78,7 +122,7 @@ public class GPSNaviActivity extends BaseActivity {
         this.mEndLatLng = new NaviLatLng(ew,ej);
         this.eList.add(mEndLatLng);
         //导航策略
-        int strategy = 0;
+        strategy = 0;
         try{
             //最后一个参数为true时代表多路径，否则代表单路径
             strategy = mAMapNavi.strategyConvert(true,false,false,false,false);
@@ -86,7 +130,7 @@ public class GPSNaviActivity extends BaseActivity {
             e.printStackTrace();
         }
        mAMapNavi.calculateDriveRoute(sList,eList,mWatPointList, strategy);  //驾车
-
+        getLngAndLatWithNetwork();
     }
 
     /**
@@ -97,6 +141,16 @@ public class GPSNaviActivity extends BaseActivity {
     public void onCalculateRouteSuccess(int[] ints) {
         super.onCalculateRouteSuccess(ints);
         mAMapNavi.startNavi(NaviType.GPS);  //开始导航
+
+    }
+
+    @Override
+    public void onLocationChange(AMapNaviLocation aMapNaviLocation) {
+        super.onLocationChange(aMapNaviLocation);
+        //重置起点
+        this.sList.clear();
+        this.mStartLatLng = new NaviLatLng(sw,sj);
+        this.sList.add(mStartLatLng);
     }
 
     @Override
@@ -119,5 +173,17 @@ public class GPSNaviActivity extends BaseActivity {
                 }).show();
 
         return super.onKeyDown(keyCode, event);
+    }
+
+    @Override
+    public void onLocationChanged(AMapLocation aMapLocation) {
+        sw = aMapLocation.getLatitude();
+        sj = aMapLocation.getLongitude();
+        //重置起点
+        this.sList.clear();
+        this.mStartLatLng = new NaviLatLng(sw,sj);
+        this.sList.add(mStartLatLng);
+        mAMapNavi.calculateDriveRoute(sList,eList,mWatPointList, strategy);  //驾车
+        Log.i(TAG, "onLocationChanged: ");
     }
 }

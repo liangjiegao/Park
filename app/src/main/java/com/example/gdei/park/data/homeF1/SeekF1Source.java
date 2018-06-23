@@ -14,6 +14,10 @@ import java.util.List;
 public interface SeekF1Source {
     /**
      * 解析输入的地址，查出停车场
+     * @param state
+     * @param parkName
+     * @param callback
+     * @param flags 标记列表显示停车场时选用哪一种方试，是否显示距离，停车场数量等
      */
     void seekParks(int state, String parkName, SeekF1Callback callback, int flags);
 

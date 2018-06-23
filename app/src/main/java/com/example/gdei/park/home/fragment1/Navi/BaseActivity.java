@@ -101,6 +101,7 @@ public class BaseActivity extends Activity implements AMapNaviListener, AMapNavi
     @Override
     public void onLocationChange(AMapNaviLocation aMapNaviLocation) {
         //当位置改变时回调
+
     }
 
     @Override

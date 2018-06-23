@@ -2,6 +2,7 @@ package com.example.gdei.park.home.fragment1;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 
 import com.amap.api.maps.model.LatLng;
 import com.amap.api.maps.model.PolylineOptions;
@@ -17,6 +18,8 @@ import java.util.List;
 
 public class SeekF1ParkPresenter implements HomeFragment1Contract.SeekParkPresenter {
 
+    private static final String TAG = "SeekF1ParkPresenter";
+    
     public static final int SEEK_PATH = 0;
     public static final int SEEK_PARK = 1;
     public static final int HISTORY_PARK = 2;
@@ -83,13 +86,18 @@ public class SeekF1ParkPresenter implements HomeFragment1Contract.SeekParkPresen
         public MyCallback(SeekParkCallback callback){
             this.callback = callback;
         }
+
+        /**
+         * 更新显示停车场的条目
+         * @param parks
+         */
         @Override
         public void callback(List<ParkMsg> parks) {
+            Log.i(TAG, "callback: "+view);
             if (view != null){
+
                 view.showFindPark(parks);
             }
-
-
         }
 
         @Override

@@ -171,19 +171,19 @@ public class HomeFragment1 extends Fragment implements HomeFragment1Contract.Vie
             case R.id.home_frag1_et_seek_park:
                 //创建跳转Intent
                 intent1 = new Intent(this.getActivity(), SeekF1ParkList.class);
-                bundle.putInt("state", SeekF1ParkPresenter.SEEK_PARK);
+               // bundle.putInt("state", SeekF1ParkPresenter.SEEK_PARK);
                 intent1.setFlags(HistoryParkAdapter.SEEK_PARK);
                 break;
             case R.id.home_frag_et_start:
                 //创建跳转Intent
                 intent1 = new Intent(this.getActivity(), SeekF1ParkList.class);
-                bundle.putInt("state", SeekF1ParkPresenter.SEEK_PATH);
+                //bundle.putInt("state", SeekF1ParkPresenter.SEEK_PATH);
                 intent1.setFlags(HistoryParkAdapter.START_LOC);
                 break;
             case R.id.home_frag_et_end:
                 //创建跳转Intent
                 intent1 = new Intent(this.getActivity(), SeekF1ParkList.class);
-                bundle.putInt("state", SeekF1ParkPresenter.SEEK_PATH);
+                //bundle.putInt("state", SeekF1ParkPresenter.SEEK_PATH);
                 intent1.setFlags(HistoryParkAdapter.END_LOC);
                 break;
             case R.id.home_frag_ib_exchange:
@@ -198,6 +198,10 @@ public class HomeFragment1 extends Fragment implements HomeFragment1Contract.Vie
                     intent1 = new Intent(this.getActivity(), ShowMap.class);
                     intent1.setAction("HomeFragment1SeekPath");
                     intent1.putExtra("isExchange", isExchange);
+                    //如果开始位置是当前的定位位置， 告诉导航地图， 在导航是可以直接更新导航
+                    if (home_frag_et_start.getText().toString().equals("[我的位置]")){
+                        intent1.putExtra("isMyLoc",true);
+                    }
                     startActivity(intent1);
                     //this.getActivity().finish();
                     return;

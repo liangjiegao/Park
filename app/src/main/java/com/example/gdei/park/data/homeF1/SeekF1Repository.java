@@ -1,11 +1,19 @@
 package com.example.gdei.park.data.homeF1;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Point;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
 
+import com.amap.api.location.AMapLocation;
+import com.amap.api.location.AMapLocationClient;
+import com.amap.api.location.AMapLocationClientOption;
+import com.amap.api.location.AMapLocationListener;
 import com.amap.api.maps.model.LatLng;
 import com.amap.api.maps.model.PolylineOptions;
 import com.amap.api.services.core.AMapException;
@@ -24,6 +32,7 @@ import com.amap.api.services.route.DriveStep;
 import com.amap.api.services.route.RideRouteResult;
 import com.amap.api.services.route.RouteSearch;
 import com.amap.api.services.route.WalkRouteResult;
+import com.autonavi.rtbt.IFrameForRTBT;
 import com.example.gdei.park.home.ParkMsg;
 import com.example.gdei.park.home.fragment1.HistoryParkAdapter;
 import com.example.gdei.park.home.fragment1.ParksList;
@@ -36,11 +45,18 @@ import java.util.List;
  * Created by gdei on 2018/4/20.
  */
 
-public class SeekF1Repository implements SeekF1Source , SeekF1Source.SeekF1Callback{
+public class SeekF1Repository implements SeekF1Source , SeekF1Source.SeekF1Callback, AMapLocationListener{
     private static final String TAG = "SeekF1Repository";
     private GeocodeSearch geocodeSearch;
     private GeocodeQuery geocodeQuery;
     private RouteSearch routeSearch;
+    private LocationManager locationManager;
+    //声明mlocationClient对象
+    public AMapLocationClient mlocationClient;
+    //声明mLocationOption对象
+    public AMapLocationClientOption mLocationOption = null;
+
+    private Context mContext;   //上下文
     private static SeekF1Source INSTANCE;
     private List<ParkMsg> parks;                //停车场集合
     private ParkMsg park;
@@ -54,10 +70,14 @@ public class SeekF1Repository implements SeekF1Source , SeekF1Source.SeekF1Callb
     private List<String> parkNames = new ArrayList<>();     //用于记录反地址解析出来的地址名称
     private int index = 0;              //用于记录当ParkNames的指针
 
+    private int flags;
+    private SeekF1Callback callback;
+
     private SeekF1Repository(Context context){
+        mContext = context;
         parks = new ArrayList<>();
-        geocodeSearch = new GeocodeSearch(context);
-        routeSearch = new RouteSearch(context);
+        geocodeSearch = new GeocodeSearch(mContext);
+        routeSearch = new RouteSearch(mContext);
         bundle = new Bundle();
 
     }
@@ -70,6 +90,8 @@ public class SeekF1Repository implements SeekF1Source , SeekF1Source.SeekF1Callb
 
     @Override
     public void seekParks(final int state, final String name, final SeekF1Callback callback, final int flags) {
+        this.callback = callback;
+        this.flags = flags;
         //设置解析监听器   （地址解析完成后回调）
         geocodeSearch.setOnGeocodeSearchListener(new GeocodeSearch.OnGeocodeSearchListener() {
             @Override
@@ -80,7 +102,7 @@ public class SeekF1Repository implements SeekF1Source , SeekF1Source.SeekF1Callb
                 parkNames.add(rAddress.getFormatAddress());
 
                 parks.get(index).setName(parkNames.get(index));
-
+                //提示更新显示停车场的条目
                 callback.callback(parks);
             }
             @Override
@@ -103,7 +125,7 @@ public class SeekF1Repository implements SeekF1Source , SeekF1Source.SeekF1Callb
                         }else if (flags == HistoryParkAdapter.END_LOC){
                             endPoint = point;
                         }
-                        //创建一个ParkMsg类, 名字暂时不设置， 等方向地址解析时在设置
+                        //创建一个ParkMsg类, 名字暂时不设置， 等反向地址解析时在设置
                         park = new ParkMsg("",point.getLongitude(), point.getLatitude(), 0,0,0f);
                         parks.add(park);
 
@@ -116,13 +138,90 @@ public class SeekF1Repository implements SeekF1Source , SeekF1Source.SeekF1Callb
                 }
             }
         });
-        if (!TextUtils.isEmpty(name)){
+        Log.i(TAG, "位置 ---》" + name);
+        if (!TextUtils.isEmpty(name) && !name.equals("[我的位置]")){
             geocodeQuery = new GeocodeQuery(name, "广州");
-
             geocodeSearch.getFromLocationNameAsyn(geocodeQuery);
+        }else if (name.equals("[我的位置]")){
+
+            getLngAndLatWithNetwork();
+
+            /*
+            Log.i(TAG, "位置 ---》" + name);
+            //根据Gps获取位置Location
+            locationManager = (LocationManager)mContext.getSystemService(Context.LOCATION_SERVICE);
+
+            Location lastKnownLoc = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+            if (lastKnownLoc != null){
+                getPoint(lastKnownLoc,flags,callback);
+            }
+            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, new LocationListener() {
+                @Override
+                public void onLocationChanged(Location location) {
+                    Log.i(TAG, "位置 ---》" + name);
+                    getPoint(location,flags,callback);
+
+                }
+                @Override
+                public void onStatusChanged(String provider, int status, Bundle extras) {}
+                @Override
+                public void onProviderEnabled(String provider) {}
+                @Override
+                public void onProviderDisabled(String provider) {}
+            });
+            */
         }
+
     }
 
+    //从网络获取经纬度
+    public Location getLngAndLatWithNetwork() {
+
+        mlocationClient = new AMapLocationClient(mContext);
+        //初始化定位参数
+        mLocationOption = new AMapLocationClientOption();
+        //设置定位监听
+        mlocationClient.setLocationListener(this);
+        //设置定位模式为高精度模式，Battery_Saving为低功耗模式，Device_Sensors是仅设备模式
+        mLocationOption.setLocationMode(AMapLocationClientOption.AMapLocationMode.Hight_Accuracy);
+        //设置定位间隔,单位毫秒,默认为2000ms
+        mLocationOption.setInterval(2000);
+        //设置定位参数
+        mlocationClient.setLocationOption(mLocationOption);
+        // 此方法为每隔固定时间会发起一次定位请求，为了减少电量消耗或网络流量消耗，
+        // 注意设置合适的定位时间的间隔（最小间隔支持为1000ms），并且在合适时间调用stopLocation()方法来取消定位请求
+        // 在定位结束后，在合适的生命周期调用onDestroy()方法
+        // 在单次定位情况下，定位无论成功与否，都无需调用stopLocation()方法移除请求，定位sdk内部会移除
+        //启动定位
+        mlocationClient.startLocation();
+        return null;
+
+    }
+
+    private void getPoint(Location location,int flags, SeekF1Callback callback){
+        //Log.i(TAG, "位置 ---》" + name);
+        if (location == null){
+            return;
+        }
+        //根据location获取
+        LatLonPoint latLonPoint = new LatLonPoint(location.getLatitude(),location.getLongitude());
+        Log.i(TAG, "flags = "+ flags);
+        //如果输入的是开始位置
+        if (flags == HistoryParkAdapter.START_LOC){
+            startPoint = latLonPoint;
+            Log.i(TAG, "选择【我的位置】");
+        }else if (flags == HistoryParkAdapter.END_LOC){
+            //如果输入的是结束位置
+            endPoint = latLonPoint;
+        }
+
+        park = new ParkMsg("[我的位置]",latLonPoint.getLongitude(), latLonPoint.getLatitude(), 0,0,0f);
+        parks.add(park);
+        Log.i(TAG, "park.Name = " + parks.get(0).getName());
+        //提示更新显示停车场的条目(这里起到的作用是回调获取完gps的提示，因为获取gps要一定的时间)
+        callback.callback(parks);
+
+    }
     @Override
     public void deletePark(int pos, HomeFragment1Source.F1Callback callback) {
         Log.i(TAG, "deletePark: pos = " + pos);
@@ -218,5 +317,12 @@ public class SeekF1Repository implements SeekF1Source , SeekF1Source.SeekF1Callb
     @Override
     public void callbackPolylineOption(List<PolylineOptions> polylineOptionses) {
 
+    }
+
+    @Override
+    public void onLocationChanged(AMapLocation aMapLocation) {
+
+        getPoint(aMapLocation,flags,callback);
+        mlocationClient.onDestroy();
     }
 }

@@ -1,10 +1,18 @@
 package com.example.gdei.park.home.fragment1;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
 import android.drm.DrmStore;
+import android.graphics.Color;
 import android.graphics.drawable.Drawable;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.support.annotation.Nullable;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -18,6 +26,10 @@ import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.RelativeLayout;
 
+import com.amap.api.location.AMapLocation;
+import com.amap.api.location.AMapLocationClient;
+import com.amap.api.location.AMapLocationClientOption;
+import com.amap.api.location.AMapLocationListener;
 import com.example.gdei.park.R;
 import com.example.gdei.park.data.Injection;
 import com.example.gdei.park.home.DividerItemDecoration;
@@ -42,8 +54,9 @@ public class SeekF1ParkList extends Activity implements HomeFragment1Contract.Se
     private List<ParkMsg> myParks;
     private int pos;        //当前点击myParks的位置
     private HistoryParkAdapter adapter; //复用适配器
-    private int flags;      //用于标记跳转到的页面是否显示，我的位置，收藏等控件
-    private int state = -1;
+    private int flags;      //用于标识点击进入的入口， 是查找停车场（SEEK_PARK）还是 查找路线 START_LOC  END_LOC
+    //private int state = -1; //用于标识是寻找停车场的点（Park），还是查找路线（Path）
+    private LocationManager locationManager;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -53,11 +66,11 @@ public class SeekF1ParkList extends Activity implements HomeFragment1Contract.Se
         initView();
 
         Bundle bundle = getIntent().getExtras();
-
+        /*
         if (bundle.getInt("state",-1) != -1){
             state = bundle.getInt("state");
         }
-
+        */
         if (presenter == null) {
             //Log.i(TAG, "onCreate: presenter");
             presenter = new SeekF1ParkPresenter(Injection.providerSeekF1Respository(this), this, flags);
@@ -74,6 +87,11 @@ public class SeekF1ParkList extends Activity implements HomeFragment1Contract.Se
         navigation = findViewById(R.id.navigation);
         collection = findViewById(R.id.collection);
         location = findViewById(R.id.location);
+
+        navigation.setOnClickListener(this);
+        collection.setOnClickListener(this);
+        location.setOnClickListener(this);
+
         flags = getIntent().getFlags();
         if (flags == HistoryParkAdapter.SEEK_PARK){
             place_list_rl.setVisibility(View.GONE);
@@ -96,11 +114,19 @@ public class SeekF1ParkList extends Activity implements HomeFragment1Contract.Se
             }
             @Override
             public void afterTextChanged(Editable s) {
-                presenter.seekPark(state, parkNameInput.getText().toString());
+                //如果是手动输入[我的位置]，不会获取定位
+                if (!parkNameInput.getText().toString().equals("[我的位置]")){
+                    presenter.seekPark(flags, parkNameInput.getText().toString());
+                }
+
             }
         });
 
     }
+
+    /**
+     * 设置RadioButton UI
+     */
     private void setRadioButtonImage(){
         //定义底部图片的大小和位置
         Drawable drawable_nav = getResources().getDrawable(R.drawable.navigation);
@@ -133,11 +159,19 @@ public class SeekF1ParkList extends Activity implements HomeFragment1Contract.Se
     public void showFindPark(List<ParkMsg> parks) {
         myParks = parks;
         if (myParks != null){
-            adapter = new HistoryParkAdapter(this, this, parks, flags);
-            rVParkList.setLayoutManager(new LinearLayoutManager(this));
-            rVParkList.addItemDecoration(new DividerItemDecoration(DividerItemDecoration.VERTICAL_LIST));
-            rVParkList.setAdapter(adapter);
+            Log.i(TAG, "showFindPark: ");
+            //如果是根据GPS回调回来的[我的位置]，则不显示列表
+            if (myParks.get(myParks.size() - 1).getName().equals("[我的位置]")){
+                Log.i(TAG, "返回park");
+                handler.sendEmptyMessage(0x001);
+            }else {
+                adapter = new HistoryParkAdapter(this, this, parks, flags);
+                rVParkList.setLayoutManager(new LinearLayoutManager(this));
+                rVParkList.addItemDecoration(new DividerItemDecoration(DividerItemDecoration.VERTICAL_LIST));
+                rVParkList.setAdapter(adapter);
+            }
         }
+        myParks = parks;
     }
 
     @Override
@@ -147,10 +181,21 @@ public class SeekF1ParkList extends Activity implements HomeFragment1Contract.Se
     //处理返回键
     @Override
     public void onClick(View v) {
-        Intent intent1 = new Intent(this, HomeActivity.class);
-        startActivity(intent1);
-        finish();
+        switch (v.getId()){
+            case R.id.back:
+                Intent intent1 = new Intent(this, HomeActivity.class);
+                startActivity(intent1);
+                finish();
+                break;
+            case R.id.navigation:
+                presenter.seekPark(flags, "[我的位置]");
+                //getLngAndLatWithNetwork();
+                //Log.i(TAG, "onClick: getLngAndLatWithNetwork() = " + getLngAndLatWithNetwork());
+        }
+
     }
+
+
 
     /**
      * 当点击查询到的停车场时的处理
@@ -173,28 +218,35 @@ public class SeekF1ParkList extends Activity implements HomeFragment1Contract.Se
                     return;
                 }
             });
-            //如果是开始、结束位置定位
+            //如果是查询线路
         }else if (flags == HistoryParkAdapter.START_LOC){
-            Intent intent1 = new Intent(SeekF1ParkList.this, HomeActivity.class);
-
             if (myParks != null){
-                Log.i(TAG, "onClickItem: myParks " + myParks.get(0).getName());
-                bundle.putString("start", myParks.get(pos).getName());
+                //调用记录选择停车场的信息并且返回主页的方法
+                recordPos(bundle,"start", myParks.get(pos).getName());
             }
-            //回到主页
-            intent1.putExtras(bundle);
-            startActivity(intent1);
-            finish();
         }else if (flags == HistoryParkAdapter.END_LOC){
-            Intent intent1 = new Intent(SeekF1ParkList.this, HomeActivity.class);
             if (myParks != null){
-                bundle.putString("end", myParks.get(pos).getName());
+                recordPos(bundle,"end", myParks.get(pos).getName());
             }
-            intent1.putExtras(bundle);
-            startActivity(intent1);
-            finish();
         }
     }
+
+    /**
+     * 记录选择的位置， 返回主页
+     * @param bundle    要传回主页的Bundle
+     * @param parkNameKey   停车场 key
+     * @param parkNameValue 停车场名称 value
+     */
+    private void recordPos(Bundle bundle, String parkNameKey, String parkNameValue){
+        Intent intent1 = new Intent(SeekF1ParkList.this, HomeActivity.class);
+        bundle.putString(parkNameKey,parkNameValue);
+        //回到主页
+        intent1.putExtras(bundle);
+        startActivity(intent1);
+        finish();
+    }
+
+
     //处理删除查询结果的按钮
     @Override
     public void onClickDelete(int pos) {
@@ -221,4 +273,19 @@ public class SeekF1ParkList extends Activity implements HomeFragment1Contract.Se
         finish();
         super.onBackPressed();
     }
+    Handler handler = new Handler(){
+        @Override
+        public void handleMessage(Message msg) {
+            switch (msg.what){
+                case 0x001:
+                    //根据GPS获取位置结束
+                    parkNameInput.setText("[我的位置]");
+                    parkNameInput.setTextColor(Color.BLUE);
+                    //presenter.seekPark(flags, parkNameInput.getText().toString());
+                    recordPos(new Bundle(),"start", "[我的位置]");
+                    break;
+            }
+        }
+    };
+
 }
